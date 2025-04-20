@@ -1,45 +1,73 @@
-## Tasks
-### 1.  Response with 200 ok
-In this stage, your server will respond to an HTTP request with a `200` response.
+# Response with 200 OK
 
-### HTTP response
+## Task Overview
+In this stage, you need to build a server that responds to an HTTP request with a `200 OK` response.
 
-An HTTP response is made up of three parts, each separated by a [CRLF](https://developer.mozilla.org/en-US/docs/Glossary/CRLF) (`\r\n`):
+## HTTP Response Structure
+An HTTP response consists of three parts separated by CRLF (`\r\n`):
+1. Status line (e.g., `HTTP/1.1 200 OK`)
+2. Headers (optional)
+3. Response body (optional)
 
-1.  Status line.
-2.  Zero or more headers, each ending with a CRLF.
-3.  Optional response body.
-
-In this stage, your server's response will only contain a status line. Here's the response your server must send:
-
-```sh
+For this task, your server only needs to send a status line:
+```
 HTTP/1.1 200 OK\r\n\r\n
 ```
 
-Here's a breakdown of the response:
+## Testing Criteria
+The tester will:
+1. Execute your program
+2. Send an HTTP GET request to your server: `curl -v http://localhost:4221`
+3. Verify that your server responds with: `HTTP/1.1 200 OK\r\n\r\n`
 
+## Solution Workflow
+
+Here's how I approached solving this task:
+
+1. **Created a TCP server** using Node.js's `net` module
+2. **Set up a connection handler** to process incoming client connections
+3. **Sent the HTTP response** with status code 200 OK
+4. **Handled connection closure** properly
+5. **Started the server** on port 4221
+
+## Implementation Notes
+
+```typescript
+import * as net from "net";
+
+const server = net.createServer((socket: net.Socket) => {
+  socket.write(Buffer.from(`HTTP/1.1 200 OK\r\n\r\n`));
+  socket.on("close", () => {
+    socket.end();
+  });
+});
+
+const PORT = 4221;
+
+server.listen(PORT, () => {
+  console.log(`Server is listening on http://localhost:${PORT}`);
+});
 ```
-// Status line HTTP/1.1 // HTTP version 200 // Status code OK // Optional reason phrase \r\n // CRLF that marks the end of the status line // Headers (empty) \r\n // CRLF that marks the end of the headers // Response body (empty)
-```
 
-For more information about HTTP responses, see the [MDN Web Docs on HTTP responses](https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages#http_responses) or the [HTTP/1.1 specification](https://datatracker.ietf.org/doc/html/rfc9112#name-message).
+### Key Components:
 
-### Tests
+1. **Importing the net Module**
+   - Used Node.js's built-in `net` module for creating a TCP server
 
-The tester will execute your program like this:
+2. **Creating the TCP Server**
+   - Created a server that handles incoming connections
+   - Each connection is represented by a socket object
 
-```bash
-$ ./your_program.sh
-```
+3. **Sending an HTTP Response**
+   - When a client connects, immediately sent the required HTTP response
+   - Used `Buffer.from()` to convert the string to a binary buffer for network transmission
 
-The tester will then send an HTTP `GET` request to your server:
+4. **Handling Connection Closure**
+   - Set up an event listener for the "close" event
+   - Ensured the socket is properly closed when the connection ends
 
-```bash
-$ curl -v http://localhost:4221
-```
+5. **Listening on a Port**
+   - Started the server on port 4221
+   - Added a console log to indicate the server is running
 
-Your server must respond to the request with the following response:
-
-```javascript
-HTTP/1.1 200 OK\r\n\r\n
-```
+This implementation uses the low-level `net` module rather than the higher-level `http` module, providing a better understanding of how HTTP works at the TCP level.
