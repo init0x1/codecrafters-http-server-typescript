@@ -38,7 +38,7 @@ const handleDefaultRoute = (): string => {
 }
 
 const handleNotFoundRoute = (): string => {
-    return "HTTP/1.1 404 NotFound\r\n\r\n";
+    return "HTTP/1.1 404 Not Found\r\n\r\n";
 }
 
 const handleEchoRequest = (request: ParsedHttpRequest): string => {
