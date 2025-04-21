@@ -1,31 +1,25 @@
 import * as net from "net";
+import { parseHttpRequest, router } from './handlers';
 
-function parseHttpRequest(data: Buffer): { path: string, method: string } {
-  const requestLine = data.toString().split('\r\n')[0];
-  const [method, path] = requestLine.split(' ');
-  return { method, path };
-}
 
 const server = net.createServer((socket: net.Socket) => {
+  
   socket.on("data", (data: Buffer) => {
-    const { method, path } = parseHttpRequest(data);
-    let response = "";
-
-    if (method === "GET" && path === "/") {
-      response = "HTTP/1.1 200 OK\r\n\r\n";
-    } else if (method === "GET" && path.startsWith("/echo/")) {
-      const echoStr = path.substring(6);
-      response =
-        `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoStr.length}\r\n\r\n${echoStr}`;
-    } else {
-      response = "HTTP/1.1 404 Not Found\r\n\r\n";
+    try {
+      const request = parseHttpRequest(data);
+      const response = router(request);
+      
+      socket.write(Buffer.from(response));
+    } catch (error) {
+      console.error(`Error handling request: ${error}`);
+      socket.write(Buffer.from('HTTP/1.1 500 Internal Server Error\r\n\r\n'));
+    } finally {
+      socket.end();
     }
-
-    socket.write(Buffer.from(response));
-    socket.end();
   });
 
-  socket.on("close", () => {
+  socket.on("error", (error) => {
+    console.error(`Socket error: ${error.message}`);
     socket.end();
   });
 });
