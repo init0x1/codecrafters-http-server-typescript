@@ -40,8 +40,21 @@ const handleDefaultRoute = (): string => {
     return "HTTP/1.1 200 OK\r\n\r\n";
 }
 
+const handleCreatedResource = (): string => {
+    return "HTTP/1.1 201 Created\r\n\r\n";
+}
+
 const handleBadRequest = (): string => {
     return "HTTP/1.1 400 Bad Request\r\n\r\n";
+}
+
+// duplicate record
+const handleConflictError = (): string => {
+    return "HTTP/1.1 409 Conflict\r\n\r\n";
+}
+
+const handleMethodNotAllowed = ():string=>{
+    return "HTTP/1.1 405 Method Not Allowed\r\n\r\n";
 }
 
 const handleServerError = (): string => {
@@ -69,9 +82,9 @@ const handleUserAgent = (request: ParsedHttpRequest): string => {
 };
 
 
-const handleFileRequest = (request: ParsedHttpRequest, baseDir:string): string=>{
-    const fileName = request.requestPath.replace("/files/","");
-    const filePath = path.join(baseDir,fileName)
+const handleGetFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
+    const fileName = request.requestPath.replace("/files/", "");
+    const filePath = path.join(baseDir, fileName)
     try {
         const fileContent = fs.readFileSync(filePath);
         return `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`;
@@ -80,6 +93,21 @@ const handleFileRequest = (request: ParsedHttpRequest, baseDir:string): string=>
     }
 }
 
+const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
+    const fileName = request.requestPath.replace("/files/", "");
+    const filePath = path.join(baseDir, fileName)
+    const fileContent = request.body as string;
+
+    if (!fs.existsSync(filePath)) {
+        try {
+            fs.writeFileSync(filePath, fileContent)
+            return handleCreatedResource()
+        } catch (error) {
+            return handleServerError()
+        }
+    }
+    return handleConflictError();
+}
 
 export const router = (request: ParsedHttpRequest): string => {
     const { requestPath } = request;
@@ -94,10 +122,19 @@ export const router = (request: ParsedHttpRequest): string => {
     if (requestPath === "/user-agent" && request.httpMethod === "GET") {
         return handleUserAgent(request);
     }
-    if(requestPath.startsWith("/files/") && request.httpMethod === "GET"){
+    if (requestPath.startsWith("/files/")) {
         const dirFlagIndex = process.argv.indexOf("--directory");
         const baseDir = process.argv[dirFlagIndex + 1] ?? "";
-        return handleFileRequest(request,baseDir)
+        if(!baseDir){
+            return handleServerError()
+        }
+        if (request.httpMethod === "GET") {
+            return handleGetFileRequest(request, baseDir)
+        }
+        if (request.httpMethod === "POST") {
+            return handlePostFileRequest(request, baseDir)
+        }
+        return handleMethodNotAllowed()
     }
 
     return handleNotFoundRoute();
