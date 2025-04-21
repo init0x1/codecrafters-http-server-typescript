@@ -37,6 +37,10 @@ const handleDefaultRoute = (): string => {
     return "HTTP/1.1 200 OK\r\n\r\n";
 }
 
+const handleNotFoundRoute = (): string => {
+    return "HTTP/1.1 404 NotFound\r\n\r\n";
+}
+
 const handleEchoRequest = (request: ParsedHttpRequest): string => {
     if (request.httpMethod === "GET" && request.requestPath.startsWith("/echo/")) {
         const echoStr = request.requestPath.substring(6);
@@ -56,16 +60,16 @@ const handleUserAgent = (request: ParsedHttpRequest): string => {
 export const router = (request: ParsedHttpRequest): string => {
     const { requestPath } = request;
 
-    if (requestPath === "/") {
+    if (requestPath === "/" && request.httpMethod === "GET") {
         return handleDefaultRoute();
     }
 
     if (requestPath.startsWith("/echo/")) {
         return handleEchoRequest(request);
     }
-    if (requestPath === "/user-agent") {
+    if (requestPath === "/user-agent" && request.httpMethod === "GET") {
         return handleUserAgent(request);
     }
 
-    return handleDefaultRoute();
+    return handleNotFoundRoute();
 };
