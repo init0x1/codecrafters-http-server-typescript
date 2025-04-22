@@ -1,5 +1,5 @@
 import * as net from "net";
-import { parseHttpRequest } from './handlers';
+import { parseHttpRequest,notPersistentConnection } from './handlers';
 import { router } from "./routes";
 
 
@@ -9,13 +9,17 @@ const server = net.createServer((socket: net.Socket) => {
     try {
       const request = parseHttpRequest(data);
       const response = router(request);
-
+      
       socket.write(response);
+      
+      if(notPersistentConnection(request)){
+        socket.end();
+      }
+      
     } catch (error) {
       console.error(`Error handling request: ${error}`);
       socket.write(Buffer.from('HTTP/1.1 500 Internal Server Error\r\n\r\n'));
-    } finally {
-      socket.end();
+      socket.end(); 
     }
   });
 

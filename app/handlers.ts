@@ -38,6 +38,14 @@ export const parseHttpRequest = (data: Buffer): ParsedHttpRequest => {
     };
 };
 
+export const notPersistentConnection = (request: ParsedHttpRequest): boolean => {
+    const connectionHeader = request.headers['connection'];
+    if(connectionHeader && connectionHeader.toLowerCase() === 'close'){
+        return true
+    }
+    return false
+}
+
 export const handleDefaultRoute = (): string => {
     return "HTTP/1.1 200 OK\r\n\r\n";
 }
@@ -79,7 +87,6 @@ export const handleEchoRequest = (request: ParsedHttpRequest): string => {
 
 export const handleUserAgent = (request: ParsedHttpRequest): string => {
     const userAgent = request.headers['user-agent'] || 'Unknown';
-
     return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`;
 };
 
@@ -118,9 +125,9 @@ export const checkAcceptEncodingHeader = (request: ParsedHttpRequest): boolean =
     }
 
     const acceptEncodingHeaders = request.headers["accept-encoding"]
-    .toLowerCase()
-    .split(',')
-    .map(encoding => encoding.trim()); 
+        .toLowerCase()
+        .split(',')
+        .map(encoding => encoding.trim());
     console.log(acceptEncodingHeaders);
     return acceptEncodingHeaders.includes("gzip");
 };
@@ -129,7 +136,7 @@ export const checkAcceptEncodingHeader = (request: ParsedHttpRequest): boolean =
 export const handleEncodedContent = (request: ParsedHttpRequest): Buffer => {
     const contentStr = request.requestPath.substring(6);
     const gzippedContent = zlib.gzipSync(contentStr);
-    
+
     const headers = [
         'HTTP/1.1 200 OK',
         'Content-Type: text/plain',
@@ -137,8 +144,8 @@ export const handleEncodedContent = (request: ParsedHttpRequest): Buffer => {
         `Content-Length: ${gzippedContent.length}`,
         '\r\n'
     ].join('\r\n');
-    
-    
+
+
     return Buffer.concat([
         Buffer.from(headers),
         gzippedContent
