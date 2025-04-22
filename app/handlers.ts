@@ -115,8 +115,8 @@ export const checkAcceptEncodingHeader = (request: ParsedHttpRequest): boolean =
       return false;
     }
     
-    const acceptEncoding = request.headers["accept-encoding"].toLowerCase();
-    return acceptEncoding.includes("gzip"); 
+    const acceptEncodingHeaders = request.headers["accept-encoding"].toLowerCase().split(',');
+    return acceptEncodingHeaders.includes("gzip"); 
   };
   
 
