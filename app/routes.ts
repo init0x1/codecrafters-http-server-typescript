@@ -20,7 +20,7 @@ import {
 const dirFlagIndex = process.argv.indexOf("--directory");
 const baseDir = dirFlagIndex !== -1 ? process.argv[dirFlagIndex + 1] : "";
 
-export const router = (request: ParsedHttpRequest): string => {
+export const router = (request: ParsedHttpRequest): string | Buffer => {
     const { requestPath, httpMethod } = request;
 
 

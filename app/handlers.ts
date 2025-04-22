@@ -1,5 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import zlib from "zlib";
+
 
 export interface ParsedHttpRequest {
     httpMethod: string;
@@ -53,7 +55,7 @@ export const handleConflictError = (): string => {
     return "HTTP/1.1 409 Conflict\r\n\r\n";
 }
 
-export const handleMethodNotAllowed = ():string=>{
+export const handleMethodNotAllowed = (): string => {
     return "HTTP/1.1 405 Method Not Allowed\r\n\r\n";
 }
 
@@ -110,17 +112,32 @@ export const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: strin
 }
 
 export const checkAcceptEncodingHeader = (request: ParsedHttpRequest): boolean => {
-    
-    if (!request.headers["accept-encoding"]) {
-      return false;
-    }
-    
-    const acceptEncodingHeaders = request.headers["accept-encoding"].toLowerCase().split(',');
-    return acceptEncodingHeaders.includes("gzip"); 
-  };
-  
 
-export const handleEncodedContent =(requst:ParsedHttpRequest):string=>{
-    return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n`;
-}
+    if (!request.headers["accept-encoding"]) {
+        return false;
+    }
+
+    const acceptEncodingHeaders = request.headers["accept-encoding"].toLowerCase().split(',');
+    return acceptEncodingHeaders.includes("gzip");
+};
+
+
+export const handleEncodedContent = (request: ParsedHttpRequest): Buffer => {
+    const contentStr = request.requestPath.substring(6);
+    const gzippedContent = zlib.gzipSync(contentStr);
+    
+    const headers = [
+        'HTTP/1.1 200 OK',
+        'Content-Type: text/plain',
+        'Content-Encoding: gzip',
+        `Content-Length: ${gzippedContent.length}`,
+        '\r\n'
+    ].join('\r\n');
+    
+    
+    return Buffer.concat([
+        Buffer.from(headers),
+        gzippedContent
+    ]);
+};
 

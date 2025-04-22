@@ -9,8 +9,8 @@ const server = net.createServer((socket: net.Socket) => {
     try {
       const request = parseHttpRequest(data);
       const response = router(request);
-      
-      socket.write(Buffer.from(response));
+
+      socket.write(response);
     } catch (error) {
       console.error(`Error handling request: ${error}`);
       socket.write(Buffer.from('HTTP/1.1 500 Internal Server Error\r\n\r\n'));
