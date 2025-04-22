@@ -40,10 +40,26 @@ export const parseHttpRequest = (data: Buffer): ParsedHttpRequest => {
 
 export const notPersistentConnection = (request: ParsedHttpRequest): boolean => {
     const connectionHeader = request.headers['connection'];
-    if(connectionHeader && connectionHeader.toLowerCase() === 'close'){
+    if (connectionHeader && connectionHeader.toLowerCase() === 'close') {
         return true
     }
     return false
+}
+
+export const setConnectionCloseHeader = (response: string | Buffer): string | Buffer => {
+    if (typeof response === 'string') {
+            if (response.includes('\r\n\r\n')) {
+            return response.replace('\r\n\r\n', '\r\nConnection: close\r\n\r\n');
+        }
+        return response;
+    } else {
+        const responseStr = response.toString();
+        if (responseStr.includes('\r\n\r\n')) {
+            const modifiedResponse = responseStr.replace('\r\n\r\n', '\r\nConnection: close\r\n\r\n');
+            return Buffer.from(modifiedResponse);
+        }
+        return response;
+    }
 }
 
 export const handleDefaultRoute = (): string => {
