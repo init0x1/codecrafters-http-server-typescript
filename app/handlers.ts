@@ -109,14 +109,16 @@ export const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: strin
     return handleConflictError();
 }
 
-export const checkAcceptEncodingHeader =(requst:ParsedHttpRequest):boolean=>{
-    const EncodingHeader = requst.headers['accept-encoding'].toLowerCase()
-    if(EncodingHeader === 'gzip'){
-        return true;
-    }
-    return false 
+export const checkAcceptEncodingHeader = (request: ParsedHttpRequest): boolean => {
     
-}
+    if (!request.headers["accept-encoding"]) {
+      return false;
+    }
+    
+    const acceptEncoding = request.headers["accept-encoding"].toLowerCase();
+    return acceptEncoding.includes("gzip"); 
+  };
+  
 
 export const handleEncodedContent =(requst:ParsedHttpRequest):string=>{
     return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n`;
