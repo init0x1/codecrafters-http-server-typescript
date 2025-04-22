@@ -36,37 +36,37 @@ export const parseHttpRequest = (data: Buffer): ParsedHttpRequest => {
     };
 };
 
-const handleDefaultRoute = (): string => {
+export const handleDefaultRoute = (): string => {
     return "HTTP/1.1 200 OK\r\n\r\n";
 }
 
-const handleCreatedResource = (): string => {
+export const handleCreatedResource = (): string => {
     return "HTTP/1.1 201 Created\r\n\r\n";
 }
 
-const handleBadRequest = (): string => {
+export const handleBadRequest = (): string => {
     return "HTTP/1.1 400 Bad Request\r\n\r\n";
 }
 
 // duplicate record
-const handleConflictError = (): string => {
+export const handleConflictError = (): string => {
     return "HTTP/1.1 409 Conflict\r\n\r\n";
 }
 
-const handleMethodNotAllowed = ():string=>{
+export const handleMethodNotAllowed = ():string=>{
     return "HTTP/1.1 405 Method Not Allowed\r\n\r\n";
 }
 
-const handleServerError = (): string => {
+export const handleServerError = (): string => {
     return "HTTP/1.1 500 Internal Server Error\r\n\r\n";
 }
 
 
-const handleNotFoundRoute = (): string => {
+export const handleNotFoundRoute = (): string => {
     return "HTTP/1.1 404 Not Found\r\n\r\n";
 }
 
-const handleEchoRequest = (request: ParsedHttpRequest): string => {
+export const handleEchoRequest = (request: ParsedHttpRequest): string => {
     if (request.httpMethod === "GET" && request.requestPath.startsWith("/echo/")) {
         const echoStr = request.requestPath.substring(6);
         return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoStr.length}\r\n\r\n${echoStr}`;
@@ -75,14 +75,14 @@ const handleEchoRequest = (request: ParsedHttpRequest): string => {
     return handleDefaultRoute();
 };
 
-const handleUserAgent = (request: ParsedHttpRequest): string => {
+export const handleUserAgent = (request: ParsedHttpRequest): string => {
     const userAgent = request.headers['user-agent'] || 'Unknown';
 
     return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`;
 };
 
 
-const handleGetFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
+export const handleGetFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
     const fileName = request.requestPath.replace("/files/", "");
     const filePath = path.join(baseDir, fileName)
     try {
@@ -93,7 +93,7 @@ const handleGetFileRequest = (request: ParsedHttpRequest, baseDir: string): stri
     }
 }
 
-const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
+export const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: string): string => {
     const fileName = request.requestPath.replace("/files/", "");
     const filePath = path.join(baseDir, fileName)
     const fileContent = request.body as string;
@@ -109,33 +109,16 @@ const handlePostFileRequest = (request: ParsedHttpRequest, baseDir: string): str
     return handleConflictError();
 }
 
-export const router = (request: ParsedHttpRequest): string => {
-    const { requestPath } = request;
+export const checkAcceptEncodingHeader =(requst:ParsedHttpRequest):boolean=>{
+    const EncodingHeader = requst.headers['accept-encoding'].toLowerCase()
+    if(EncodingHeader === 'gzip'){
+        return true;
+    }
+    return false 
+    
+}
 
-    if (requestPath === "/" && request.httpMethod === "GET") {
-        return handleDefaultRoute();
-    }
+export const handleEncodedContent =(requst:ParsedHttpRequest):string=>{
+    return `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\n\r\n`;
+}
 
-    if (requestPath.startsWith("/echo/")) {
-        return handleEchoRequest(request);
-    }
-    if (requestPath === "/user-agent" && request.httpMethod === "GET") {
-        return handleUserAgent(request);
-    }
-    if (requestPath.startsWith("/files/")) {
-        const dirFlagIndex = process.argv.indexOf("--directory");
-        const baseDir = process.argv[dirFlagIndex + 1] ?? "";
-        if(!baseDir){
-            return handleServerError()
-        }
-        if (request.httpMethod === "GET") {
-            return handleGetFileRequest(request, baseDir)
-        }
-        if (request.httpMethod === "POST") {
-            return handlePostFileRequest(request, baseDir)
-        }
-        return handleMethodNotAllowed()
-    }
-
-    return handleNotFoundRoute();
-};

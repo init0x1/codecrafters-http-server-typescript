@@ -1,5 +1,6 @@
 import * as net from "net";
-import { parseHttpRequest, router } from './handlers';
+import { parseHttpRequest } from './handlers';
+import { router } from "./routes";
 
 
 const server = net.createServer((socket: net.Socket) => {
